@@ -2038,3 +2038,4 @@ mod tests {
         assert_eq!(json["total"], 42);
     }
 }
+
