@@ -678,7 +678,7 @@ impl IndexScheduler {
                     enqueued.len() as u32,
                 );
                 progress.update_progress(update_file_progress);
-                for task_id in enqueued {
+                for task_id in self.get_status(&rtxn, Status::Enqueued)? {
                     let task = self
                         .get_task(&rtxn, task_id)?
                         .ok_or(Error::CorruptedTaskQueue)?;
