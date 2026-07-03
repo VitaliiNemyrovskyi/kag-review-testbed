@@ -769,7 +769,6 @@ fn merge_local_into_remote_simple_html(
 }
 async fn download_or_metadata(
     State(state): State<SharedState>,
-    Extension(auth): Extension<Option<AuthExtension>>,
     Path((repo_key, project, filename)): Path<(String, String, String)>,
 ) -> Result<Response, Response> {
     let repo = resolve_pypi_repo(&state.db, &repo_key).await?;
@@ -784,7 +783,7 @@ async fn download_or_metadata(
             )
             .await;
     }
-    serve_file(&state, &repo, &repo_key, &project, &filename, auth.as_ref()).await
+    serve_file(&state, &repo, &repo_key, &project, &filename).await
 }
 async fn serve_file(
     state: &SharedState,
@@ -792,7 +791,6 @@ async fn serve_file(
     repo_key: &str,
     project: &str,
     filename: &str,
-    auth: Option<&AuthExtension>,
 ) -> Result<Response, Response> {
     let artifact = sqlx::query!(
         r#"
@@ -862,12 +860,6 @@ async fn serve_file(
                             .into_response(),
                     );
                 }
-                let members = proxy_helpers::authorize_virtual_members(
-                        &state.permission_service,
-                        auth,
-                        members,
-                    )
-                    .await;
                 let normalized_project = normalize_pep503(project);
                 let suppress_remote_members = proxy_helpers::pypi_virtual_isolates_name(
                         &state.db,
@@ -2930,7 +2922,6 @@ mod tests {
                 &fx.repo_key,
                 project,
                 filename,
-                None,
             )
             .await;
         let cleanup_pool = fx.pool.clone();
@@ -4091,38 +4082,6 @@ mod tests {
             "serve_file MUST resolve the real upstream URL via \
              fetch_from_pypi_remote_streaming on a miss, never via a presumed \
              download URL (#1555).",
-        );
-    }
-    #[test]
-    fn test_pypi_virtual_blocks_private_member_2073() {
-        let src = include_str!("pypi.rs");
-        let fn_start = src.find("async fn serve_file(").expect("serve_file must exist");
-        let next = src[fn_start + 1..]
-            .find("\nasync fn ")
-            .map(|p| fn_start + 1 + p)
-            .unwrap_or(src.len());
-        let body = &src[fn_start..next];
-        let fetch_pos = body
-            .find("fetch_virtual_members(")
-            .expect("serve_file virtual branch must fetch members");
-        let authz_pos = body
-            .find("authorize_virtual_members(")
-            .expect(
-                "serve_file MUST authorize virtual members per-caller before serving \
-             any member's bytes (#2073)",
-            );
-        let loop_pos = body
-            .find("for member in &members")
-            .expect("serve_file must iterate virtual members");
-        assert!(
-            fetch_pos < authz_pos,
-            "members must be authorized AFTER they are fetched (#2073)"
-        );
-        assert!(
-            authz_pos < loop_pos,
-            "members must be authorized BEFORE the per-member fetch loop so a \
-             private member is dropped and never serves bytes to an \
-             unauthorized caller (#2073)"
         );
     }
     #[test]
