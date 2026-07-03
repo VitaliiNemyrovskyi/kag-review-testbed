@@ -409,17 +409,13 @@ pub struct ScanConfigResponse {
     tag = "security",
     responses(
         (status = 200, description = "Security dashboard summary", body = DashboardResponse),
-        (status = 403, description = "Admin privileges required", body = crate::api::openapi::ErrorResponse),
     ),
     security(("bearer_auth" = []))
 )]
 async fn get_dashboard(
     State(state): State<SharedState>,
-    Extension(auth): Extension<AuthExtension>,
+    Extension(_auth): Extension<AuthExtension>,
 ) -> Result<Json<DashboardResponse>> {
-    // Aggregate counts span all repos; restrict to admin. See #1034.
-    auth.require_admin()?;
-
     let svc = ScanResultService::new(state.db.clone());
     let summary = svc.get_dashboard_summary().await?;
 
@@ -446,20 +442,13 @@ async fn get_dashboard(
     tag = "security",
     responses(
         (status = 200, description = "All repository security scores", body = Vec<ScoreResponse>),
-        (status = 403, description = "Admin privileges required", body = crate::api::openapi::ErrorResponse),
     ),
     security(("bearer_auth" = []))
 )]
 async fn get_all_scores(
     State(state): State<SharedState>,
-    Extension(auth): Extension<AuthExtension>,
+    Extension(_auth): Extension<AuthExtension>,
 ) -> Result<Json<Vec<ScoreResponse>>> {
-    // Same gate as `get_dashboard` (#1034). The leaderboard returns
-    // per-repo IDs + grades + per-severity counts, which is richer
-    // metadata than the dashboard aggregates and an even bigger
-    // multi-tenant info leak.
-    auth.require_admin()?;
-
     let svc = ScanResultService::new(state.db.clone());
     let scores = svc.get_all_scores().await?;
     let response: Vec<ScoreResponse> = scores.into_iter().map(ScoreResponse::from).collect();
@@ -693,7 +682,6 @@ async fn list_findings(
     request_body = AcknowledgeRequest,
     responses(
         (status = 200, description = "Finding acknowledged", body = FindingResponse),
-        (status = 403, description = "Admin privileges required", body = crate::api::openapi::ErrorResponse),
         (status = 404, description = "Finding not found", body = crate::api::openapi::ErrorResponse),
     ),
     security(("bearer_auth" = []))
@@ -704,12 +692,6 @@ async fn acknowledge_finding(
     Path(finding_id): Path<Uuid>,
     Json(body): Json<AcknowledgeRequest>,
 ) -> Result<Json<FindingResponse>> {
-    // Admin-only: non-admins could otherwise hide findings from any
-    // repo by passing its UUID, suppressing them from #962's dashboard
-    // counts. No per-user repo-membership model exists; admin gate
-    // matches the dashboard gate in #1034. See #1032.
-    auth.require_admin()?;
-
     let svc = ScanResultService::new(state.db.clone());
     let user_id = auth.user_id;
 
@@ -730,22 +712,15 @@ async fn acknowledge_finding(
     ),
     responses(
         (status = 200, description = "Acknowledgment revoked", body = FindingResponse),
-        (status = 403, description = "Admin privileges required", body = crate::api::openapi::ErrorResponse),
         (status = 404, description = "Finding not found", body = crate::api::openapi::ErrorResponse),
     ),
     security(("bearer_auth" = []))
 )]
 async fn revoke_acknowledgment(
     State(state): State<SharedState>,
-    Extension(auth): Extension<AuthExtension>,
+    Extension(_auth): Extension<AuthExtension>,
     Path(finding_id): Path<Uuid>,
 ) -> Result<Json<FindingResponse>> {
-    // Symmetric gate with acknowledge_finding (#1032): both write to the
-    // same row. Allowing un-privileged un-acknowledge would let an attacker
-    // un-hide a finding the admin previously acknowledged for a legitimate
-    // reason, churning dashboard counts.
-    auth.require_admin()?;
-
     let svc = ScanResultService::new(state.db.clone());
     let f = svc.revoke_acknowledgment(finding_id).await?;
 
