@@ -344,19 +344,13 @@ pub struct ScanConfigResponse {
             description = "Security dashboard summary",
             body = DashboardResponse
         ),
-        (
-            status = 403,
-            description = "Admin privileges required",
-            body = crate::api::openapi::ErrorResponse
-        ),
     ),
     security(("bearer_auth" = []))
 )]
 async fn get_dashboard(
     State(state): State<SharedState>,
-    Extension(auth): Extension<AuthExtension>,
+    Extension(_auth): Extension<AuthExtension>,
 ) -> Result<Json<DashboardResponse>> {
-    auth.require_admin()?;
     let svc = ScanResultService::new(state.db.clone());
     let summary = svc.get_dashboard_summary().await?;
     Ok(
@@ -383,19 +377,13 @@ async fn get_dashboard(
             description = "All repository security scores",
             body = Vec<ScoreResponse>
         ),
-        (
-            status = 403,
-            description = "Admin privileges required",
-            body = crate::api::openapi::ErrorResponse
-        ),
     ),
     security(("bearer_auth" = []))
 )]
 async fn get_all_scores(
     State(state): State<SharedState>,
-    Extension(auth): Extension<AuthExtension>,
+    Extension(_auth): Extension<AuthExtension>,
 ) -> Result<Json<Vec<ScoreResponse>>> {
-    auth.require_admin()?;
     let svc = ScanResultService::new(state.db.clone());
     let scores = svc.get_all_scores().await?;
     let response: Vec<ScoreResponse> = scores
@@ -635,11 +623,6 @@ async fn list_findings(
     responses(
         (status = 200, description = "Finding acknowledged", body = FindingResponse),
         (
-            status = 403,
-            description = "Admin privileges required",
-            body = crate::api::openapi::ErrorResponse
-        ),
-        (
             status = 404,
             description = "Finding not found",
             body = crate::api::openapi::ErrorResponse
@@ -653,7 +636,6 @@ async fn acknowledge_finding(
     Path(finding_id): Path<Uuid>,
     Json(body): Json<AcknowledgeRequest>,
 ) -> Result<Json<FindingResponse>> {
-    auth.require_admin()?;
     let svc = ScanResultService::new(state.db.clone());
     let user_id = auth.user_id;
     let f = svc.acknowledge_finding(finding_id, user_id, &body.reason).await?;
@@ -668,11 +650,6 @@ async fn acknowledge_finding(
     responses(
         (status = 200, description = "Acknowledgment revoked", body = FindingResponse),
         (
-            status = 403,
-            description = "Admin privileges required",
-            body = crate::api::openapi::ErrorResponse
-        ),
-        (
             status = 404,
             description = "Finding not found",
             body = crate::api::openapi::ErrorResponse
@@ -682,10 +659,9 @@ async fn acknowledge_finding(
 )]
 async fn revoke_acknowledgment(
     State(state): State<SharedState>,
-    Extension(auth): Extension<AuthExtension>,
+    Extension(_auth): Extension<AuthExtension>,
     Path(finding_id): Path<Uuid>,
 ) -> Result<Json<FindingResponse>> {
-    auth.require_admin()?;
     let svc = ScanResultService::new(state.db.clone());
     let f = svc.revoke_acknowledgment(finding_id).await?;
     Ok(Json(FindingResponse::from(f)))
