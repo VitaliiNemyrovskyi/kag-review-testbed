@@ -3,9 +3,6 @@ export function checkFraudSignals(account: string, amount: number): boolean {
 }
 
 export function refund(account: string, amount: number): boolean {
-  if (!checkFraudSignals(account, amount)) {
-    throw new Error("refund blocked by fraud check");
-  }
   ledger.credit(account, amount);
   return true;
 }
