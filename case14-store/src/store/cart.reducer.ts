@@ -11,10 +11,6 @@ export function cartReducer(state: CartState = initial, action: any): CartState 
       return { ...state, items: [...state.items, action.sku] };
     case "cart/remove":
       return { ...state, items: state.items.filter((s) => s !== action.sku) };
-    case "cart/checkout":
-      return { ...state, checkedOut: true };
-    case "cart/clear":
-      return { ...state, items: [], checkedOut: false };
     default:
       return state;
   }
