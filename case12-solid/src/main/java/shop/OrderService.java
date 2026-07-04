@@ -1,11 +1,10 @@
 package shop;
 
-/** Places orders. Depends on the PaymentGateway abstraction (injected). */
+/** Places orders. */
 public class OrderService {
-    private final PaymentGateway gateway;
+    private final PaymentGateway gateway = new StripeGateway();
 
-    public OrderService(PaymentGateway gateway) {
-        this.gateway = gateway;
+    public OrderService() {
     }
 
     public boolean checkout(long amountCents) {
