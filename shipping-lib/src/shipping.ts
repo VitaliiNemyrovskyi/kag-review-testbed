@@ -9,6 +9,6 @@ export function computeShippingCost(parcel: Parcel): number {
   return base + parcel.weightKg * 2;
 }
 
-export function formatParcelLabel(parcel: Parcel): string {
+export function renderParcelLabel(parcel: Parcel): string {
   return `${parcel.zone}-${parcel.weightKg}kg`;
 }
