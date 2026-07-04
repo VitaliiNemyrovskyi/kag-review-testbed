@@ -5,7 +5,7 @@ export class InventoryService {
 
   reserve(sku: string, qty: number) {
     // Hold stock for a pending order.
-    this.store.dispatch({ type: "inventory/reserved", sku, qty });
+    this.store.dispatch({ type: "inventory/resreved", sku, qty });
   }
 
   release(sku: string, qty: number) {
