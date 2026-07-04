@@ -1,0 +1,9 @@
+{
+  "name": "case21-seclegal",
+  "version": "1.0.0",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "sequelize-hierarchy": "^2.0.0"
+  }
+}
