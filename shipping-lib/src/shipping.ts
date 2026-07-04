@@ -8,3 +8,7 @@ export function computeShippingCost(parcel: Parcel): number {
   const base = parcel.zone === "domestic" ? 5 : 20;
   return base + parcel.weightKg * 2;
 }
+
+export function formatParcelLabel(parcel: Parcel): string {
+  return `${parcel.zone}-${parcel.weightKg}kg`;
+}
