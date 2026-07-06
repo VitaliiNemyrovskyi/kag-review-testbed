@@ -56,7 +56,7 @@ impl From<SecretKey> for Keypair {
 pub struct PublicKey(ed25519::PublicKey);
 impl PublicKey {
     pub fn verify(&self, msg: &[u8], sig: &[u8]) -> bool {
-        ed25519::Signature::from_bytes(sig).and_then(|s| self.0.verify(msg, &s)).is_ok()
+        ed25519::Signature::from_bytes(sig).map(|s| self.0.verify(msg, &s)).is_ok()
     }
     pub fn encode(&self) -> [u8; 32] {
         self.0.to_bytes()
