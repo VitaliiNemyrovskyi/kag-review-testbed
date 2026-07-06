@@ -4,7 +4,7 @@ export interface Parcel {
 }
 
 /** Public API: computes the shipping cost for a parcel. Consumed by client apps. */
-export function computeShippingCost(parcel: Parcel): number {
+export function calculateShipping(parcel: Parcel): number {
   const base = parcel.zone === "domestic" ? 5 : 20;
   return base + parcel.weightKg * 2;
 }
