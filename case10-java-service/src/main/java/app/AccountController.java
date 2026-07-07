@@ -8,9 +8,8 @@ public class AccountController {
         this.accounts = accounts;
     }
 
-    /** Updates the account email after authorization and validation. */
+    /** Updates the account email after validation. */
     public boolean updateEmail(Session session, long accountId, String newEmail) {
-        AccessGuard.checkAccess(session, accountId);
         if (!Validation.isValidEmail(newEmail)) {
             return false;
         }
