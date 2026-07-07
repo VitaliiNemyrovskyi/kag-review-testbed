@@ -754,11 +754,6 @@ pub fn op_fetch_custom_client(
                         Some("Deno.createHttpClient()"),
                     )?
                     .into_path();
-                permissions
-                    .check_net_unix_socket(
-                        &resolved_path,
-                        Some("Deno.createHttpClient()"),
-                    )?;
                 if path != resolved_path {
                     *original_path = resolved_path.to_string_lossy().into_owned();
                 }
